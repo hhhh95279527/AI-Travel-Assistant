@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: travel-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - LLM_PROVIDER=${LLM_PROVIDER:-deepseek}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://localhost:11434/v1}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3.5:0.8b}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost}
+      - WEATHER_API_KEY=${WEATHER_API_KEY:-}
+    networks:
+      - travel-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: travel-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - travel-net
+
+networks:
+  travel-net:
+    driver: bridge
