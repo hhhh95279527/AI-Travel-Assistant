@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Silent Horizons — 旅行的意义</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.10.0/p5.min.js"></script>
+<style>
+  body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #1a1a1a; }
+  canvas { box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  #saveBtn { position: fixed; bottom: 24px; right: 24px; padding: 10px 24px; background: rgba(255,255,255,0.08); color: #aaa; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; cursor: pointer; font-size: 12px; letter-spacing: 0.04em; font-family: -apple-system, sans-serif; }
+  #saveBtn:hover { background: rgba(255,255,255,0.16); color: #fff; }
+</style>
+</head>
+<body>
+<button id="saveBtn" onclick="saveCanvas('silent-horizons', 'png')">Download PNG</button>
+<script>
+new p5((p) => {
+  let W = 700, H = 1000;
+
+  p.setup = () => {
+    p.createCanvas(W, H);
+    p.noLoop();
+  };
+
+  p.draw = () => {
+    // ═══════════════════════════════════════════
+    // 1. 底色——精调过的大地色渐变
+    // ═══════════════════════════════════════════
+    let bg = p.drawingContext.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0,    '#eee6d8');  // 天空：暖白米色
+    bg.addColorStop(0.28, '#e2d4be');  // 天光过渡
+    bg.addColorStop(0.50, '#cfb995');  // 地平线附近：暖沙色
+    bg.addColorStop(0.72, '#b8936a');  // 中地：熟赭
+    bg.addColorStop(0.90, '#967852');  // 深地：深褐
+    bg.addColorStop(1,    '#6d5237');  // 底部：深棕
+    p.drawingContext.fillStyle = bg;
+    p.drawingContext.fillRect(0, 0, W, H);
+
+    // ═══════════════════════════════════════════
+    // 2. 纸纹——两次叠加，更自然的颗粒感
+    // ═══════════════════════════════════════════
+    // 第一道：粗颗粒
+    p.drawingContext.globalAlpha = 0.025;
+    for (let i = 0; i < 5000; i++) {
+      let x = p.random(W), y = p.random(H);
+      p.drawingContext.fillStyle = '#000';
+      p.drawingContext.fillRect(x, y, p.random(0.5, 2.5), p.random(0.5, 2.5));
+    }
+    // 第二道：细颗粒（更密更浅）
+    p.drawingContext.globalAlpha = 0.018;
+    for (let i = 0; i < 8000; i++) {
+      let x = p.random(W), y = p.random(H);
+      p.drawingContext.fillStyle = p.random() > 0.55 ? '#000' : '#fff';
+      p.drawingContext.fillRect(x, y, p.random(0.3, 1.2), p.random(0.3, 1.2));
+    }
+    p.drawingContext.globalAlpha = 1;
+
+    // ═══════════════════════════════════════════
+    // 3. 三条等高线——退向远方的节奏
+    // ═══════════════════════════════════════════
+    let hY = H * 0.495;
+    let horizons = [
+      { y: hY,       w: 0.45, a: 0.30 },
+      { y: hY + 72,  w: 0.35, a: 0.16 },
+      { y: hY + 148, w: 0.25, a: 0.08 },
+    ];
+    horizons.forEach(h => {
+      p.drawingContext.strokeStyle = `rgba(70,48,28,${h.a})`;
+      p.drawingContext.lineWidth = h.w;
+      p.drawingContext.beginPath();
+      p.drawingContext.moveTo(0, h.y);
+      p.drawingContext.lineTo(W, h.y);
+      p.drawingContext.stroke();
+    });
+
+    // ═══════════════════════════════════════════
+    // 4. 山脉轮廓——一笔连续起伏
+    // ═══════════════════════════════════════════
+    let peaks = [
+      [60, hY-22], [120, hY+8], [200, hY-35], [270, hY-5],
+      [330, hY-42], [400, hY+12], [460, hY-28], [530, hY-48],
+      [590, hY-10], [660, hY-25]
+    ];
+
+    p.drawingContext.strokeStyle = 'rgba(65,40,22,0.22)';
+    p.drawingContext.lineWidth = 0.5;
+    p.drawingContext.beginPath();
+    p.drawingContext.moveTo(-5, hY + 35);
+    peaks.forEach(p => p.drawingContext.quadraticCurveTo(p[0], p[1], p[0] + 30, hY + 8));
+    p.drawingContext.lineTo(W + 5, hY + 35);
+    p.drawingContext.stroke();
+
+    // 山脉柔光填充
+    let mtFill = p.drawingContext.createLinearGradient(0, hY - 48, 0, hY + 35);
+    mtFill.addColorStop(0, 'rgba(140,100,55,0.10)');
+    mtFill.addColorStop(0.5, 'rgba(120,80,40,0.06)');
+    mtFill.addColorStop(1, 'rgba(100,60,30,0.02)');
+    p.drawingContext.fillStyle = mtFill;
+    p.drawingContext.beginPath();
+    p.drawingContext.moveTo(0, hY + 35);
+    peaks.forEach(p => p.drawingContext.quadraticCurveTo(p[0], p[1], p[0] + 30, hY + 8));
+    p.drawingContext.lineTo(W, hY + 35);
+    p.drawingContext.closePath();
+    p.drawingContext.fill();
+
+    // ═══════════════════════════════════════════
+    // 5. 天空中横向波纹——更精微的地形线
+    // ═══════════════════════════════════════════
+    for (let i = 0; i < 18; i++) {
+      let baseY = 55 + i * 19;
+      let amp = 3.5 + i * 0.55;
+      let alpha = 0.06 + (i < 8 ? 0.02 : 0);
+      p.drawingContext.strokeStyle = `rgba(90,65,40,${alpha})`;
+      p.drawingContext.lineWidth = 0.25;
+      p.drawingContext.beginPath();
+      p.drawingContext.moveTo(0, baseY);
+      for (let x = 0; x < W; x += 6) {
+        let yoff = p.sin(x * 0.013 + i * 0.65) * amp + p.cos(x * 0.007 + i * 1.1) * (amp * 0.55);
+        p.drawingContext.lineTo(x, baseY + yoff);
+      }
+      p.drawingContext.stroke();
+    }
+
+    // ═══════════════════════════════════════════
+    // 6. 航点——精调位置、大小、透明度
+    // ═══════════════════════════════════════════
+    let waypoints = [
+      { x: 95,  y: 165, r: 2.0, a: 0.85 },
+      { x: 175, y: 205, r: 1.6, a: 0.65 },
+      { x: 310, y: 130, r: 2.4, a: 0.95 },
+      { x: 435, y: 190, r: 1.5, a: 0.55 },
+      { x: 550, y: 145, r: 1.9, a: 0.80 },
+      { x: 275, y: 280, r: 1.4, a: 0.50 },
+      { x: 485, y: 355, r: 2.0, a: 0.75 },
+      { x: 140, y: 395, r: 1.7, a: 0.65 },
+      { x: 395, y: 270, r: 1.3, a: 0.45 },
+      { x: 610, y: 320, r: 2.1, a: 0.85 },
+      { x: 155, y: 540, r: 1.6, a: 0.60 },
+      { x: 360, y: 600, r: 2.2, a: 0.85 },
+      { x: 505, y: 515, r: 1.7, a: 0.65 },
+      { x: 230, y: 690, r: 1.9, a: 0.75 },
+      { x: 455, y: 730, r: 1.4, a: 0.50 },
+      { x: 585, y: 660, r: 2.0, a: 0.80 },
+    ];
+
+    waypoints.forEach(w => {
+      // 光晕
+      p.drawingContext.fillStyle = `rgba(55,32,16,${(w.a * 0.18).toFixed(3)})`;
+      p.drawingContext.beginPath();
+      p.drawingContext.arc(w.x, w.y, w.r * 3.5, 0, Math.PI * 2);
+      p.drawingContext.fill();
+      // 核心
+      p.drawingContext.fillStyle = `rgba(48,28,14,${w.a.toFixed(2)})`;
+      p.drawingContext.beginPath();
+      p.drawingContext.arc(w.x, w.y, w.r, 0, Math.PI * 2);
+      p.drawingContext.fill();
+    });
+
+    // ═══════════════════════════════════════════
+    // 7. 坐标线——只保留边缘标记，去掉全幅网格
+    // ═══════════════════════════════════════════
+    // 底部刻度线
+    for (let gx = 50; gx < W - 20; gx += 35) {
+      p.drawingContext.strokeStyle = 'rgba(100,75,45,0.12)';
+      p.drawingContext.lineWidth = 0.2;
+      p.drawingContext.beginPath();
+      p.drawingContext.moveTo(gx, H - 38);
+      p.drawingContext.lineTo(gx, H - 34);
+      p.drawingContext.stroke();
+    }
+    // 左侧刻度线
+    for (let gy = 130; gy < H - 60; gy += 35) {
+      p.drawingContext.strokeStyle = 'rgba(100,75,45,0.10)';
+      p.drawingContext.lineWidth = 0.2;
+      p.drawingContext.beginPath();
+      p.drawingContext.moveTo(46, gy);
+      p.drawingContext.lineTo(50, gy);
+      p.drawingContext.stroke();
+    }
+
+    // 经度标注
+    p.drawingContext.fillStyle = 'rgba(90,65,40,0.35)';
+    p.drawingContext.font = '8px "Courier New", monospace';
+    p.drawingContext.textAlign = 'center';
+    ['118°E','120°E','122°E','124°E','126°E'].forEach((lbl, i) => {
+      p.drawingContext.fillText(lbl, 44 + i * 155, H - 16);
+    });
+
+    // 纬度标注
+    p.drawingContext.textAlign = 'right';
+    ['34°N','32°N','30°N','28°N','26°N'].forEach((lbl, i) => {
+      p.drawingContext.fillText(lbl, 32, 128 + i * 155);
+    });
+
+    // ═══════════════════════════════════════════
+    // 8. 旅行折线——淡朱色虚线，连接航点
+    // ═══════════════════════════════════════════
+    let pathPts = [
+      {x: 95, y: 165}, {x: 175, y: 205}, {x: 310, y: 130},
+      {x: 435, y: 190}, {x: 550, y: 145}, {x: 610, y: 320},
+      {x: 485, y: 355}, {x: 360, y: 600}, {x: 230, y: 690}
+    ];
+    p.drawingContext.strokeStyle = 'rgba(165,55,25,0.20)';
+    p.drawingContext.lineWidth = 0.35;
+    p.drawingContext.setLineDash([2.5, 14]);
+    p.drawingContext.beginPath();
+    p.drawingContext.moveTo(pathPts[0].x, pathPts[0].y);
+    pathPts.slice(1).forEach(pt => p.drawingContext.lineTo(pt.x, pt.y));
+    p.drawingContext.stroke();
+    p.drawingContext.setLineDash([]);
+
+    // 终点红点
+    p.drawingContext.fillStyle = 'rgba(170,40,10,0.18)';
+    p.drawingContext.beginPath();
+    p.drawingContext.arc(230, 690, 7, 0, Math.PI * 2);
+    p.drawingContext.fill();
+    p.drawingContext.fillStyle = 'rgba(170,40,10,0.65)';
+    p.drawingContext.beginPath();
+    p.drawingContext.arc(230, 690, 2.2, 0, Math.PI * 2);
+    p.drawingContext.fill();
+
+    // ═══════════════════════════════════════════
+    // 9. 指北针——右上角
+    // ═══════════════════════════════════════════
+    let nx = W - 68, ny = 78;
+    p.drawingContext.strokeStyle = 'rgba(55,35,20,0.42)';
+    p.drawingContext.lineWidth = 0.5;
+    p.drawingContext.beginPath();
+    p.drawingContext.arc(nx, ny, 20, 0, Math.PI * 2);
+    p.drawingContext.stroke();
+    p.drawingContext.beginPath();
+    p.drawingContext.arc(nx, ny, 16, 0, Math.PI * 2);
+    p.drawingContext.stroke();
+    // 箭头
+    p.drawingContext.fillStyle = 'rgba(55,35,20,0.50)';
+    p.drawingContext.beginPath();
+    p.drawingContext.moveTo(nx, ny - 18);
+    p.drawingContext.lineTo(nx - 3.5, ny + 4);
+    p.drawingContext.lineTo(nx + 3.5, ny + 4);
+    p.drawingContext.closePath();
+    p.drawingContext.fill();
+    p.drawingContext.fillStyle = 'rgba(55,35,20,0.45)';
+    p.drawingContext.beginPath();
+    p.drawingContext.moveTo(nx, ny + 16);
+    p.drawingContext.lineTo(nx - 2.5, ny - 2);
+    p.drawingContext.lineTo(nx + 2.5, ny - 2);
+    p.drawingContext.closePath();
+    p.drawingContext.fill();
+    p.drawingContext.fillStyle = 'rgba(55,35,20,0.35)';
+    p.drawingContext.font = '8px "Courier New", monospace';
+    p.drawingContext.textAlign = 'center';
+    p.drawingContext.fillText('N', nx, ny - 22);
+
+    // ═══════════════════════════════════════════
+    // 10. 比例尺——左下角
+    // ═══════════════════════════════════════════
+    let sx = 56, sy = H - 60;
+    p.drawingContext.strokeStyle = 'rgba(55,35,20,0.42)';
+    p.drawingContext.lineWidth = 0.4;
+    p.drawingContext.beginPath();
+    p.drawingContext.moveTo(sx, sy);
+    p.drawingContext.lineTo(sx + 80, sy);
+    p.drawingContext.stroke();
+    // 刻度
+    [sx, sx + 40, sx + 80].forEach((ex, i) => {
+      p.drawingContext.beginPath();
+      p.drawingContext.moveTo(ex, sy - 4);
+      p.drawingContext.lineTo(ex, sy + 4);
+      p.drawingContext.stroke();
+    });
+    p.drawingContext.fillStyle = 'rgba(55,35,20,0.35)';
+    p.drawingContext.font = '7px "Courier New", monospace';
+    p.drawingContext.textAlign = 'center';
+    p.drawingContext.fillText('0', sx, sy + 13);
+    p.drawingContext.fillText('500', sx + 40, sy + 13);
+    p.drawingContext.fillText('1000 km', sx + 80, sy + 13);
+
+    // ═══════════════════════════════════════════
+    // 11. 排版——标题系统
+    // ═══════════════════════════════════════════
+    let titleX = 56, baseY = 810;
+
+    // 主标题
+    p.drawingContext.fillStyle = 'rgba(45,28,14,0.82)';
+    p.drawingContext.font = '400 68px "Crimson Pro", "SimSun", "STSong", serif';
+    p.drawingContext.textAlign = 'left';
+    p.drawingContext.fillText('旅行', titleX, baseY);
+
+    // 英文副标题
+    p.drawingContext.fillStyle = 'rgba(70,45,25,0.52)';
+    p.drawingContext.font = '300 20px "Jura", "Work Sans", sans-serif';
+    p.drawingContext.fillText('T H E   M E A N I N G   O F   T R A V E L', titleX + 4, baseY + 36);
+
+    // 中文副标题
+    p.drawingContext.fillStyle = 'rgba(85,58,35,0.40)';
+    p.drawingContext.font = '300 14px "Noto Serif SC", "STSong", "SimSun", serif';
+    p.drawingContext.fillText('旅行的意义', titleX + 4, baseY + 62);
+
+    // 底部注脚
+    p.drawingContext.fillStyle = 'rgba(80,55,35,0.25)';
+    p.drawingContext.font = '7px "Courier New", monospace';
+    p.drawingContext.textAlign = 'right';
+    p.drawingContext.fillText('SILENT HORIZONS · CARTOGRAPHY OF WANDERING · MMXXVI', W - 50, H - 10);
+  };
+});
+</script>
+</body>
+</html>

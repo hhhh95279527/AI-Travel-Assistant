@@ -1,0 +1,31 @@
+{
+  "name": "travel-agent-backend",
+  "version": "1.0.0",
+  "description": "旅途 AI 旅行规划助手 - NestJS 后端",
+  "scripts": {
+    "start:dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 ts-node --transpile-only -r tsconfig-paths/register src/main.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.46",
+    "@langchain/langgraph": "^1.2.8",
+    "@langchain/ollama": "^1.2.6",
+    "@langchain/openai": "^0.5.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "dotenv": "^16.0.0",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "cross-env": "^10.1.0",
+    "ts-node": "^10.9.0",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.0.0"
+  }
+}
